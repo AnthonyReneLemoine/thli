@@ -420,7 +420,7 @@
         <button class="tab" data-tab="myWishlist" onclick="showTab('myWishlist')">Ma wishlist</button>
         <button class="tab" data-tab="guildWishlists" onclick="showTab('guildWishlists')">Wishlists guilde</button>
         <button class="tab" data-tab="loots" onclick="showTab('loots')">Loots attribués</button>
-        <button class="tab" data-tab="admin" onclick="showTab('admin')">Admin / Officiers</button>
+        <button id="adminTabButton" class="tab hidden" data-tab="admin" onclick="showTab('admin')">Admin / Officiers</button>
       </div>
 
       <section id="tab-items" class="card">
@@ -520,14 +520,12 @@
     */
 
     const firebaseConfig = {
-const firebaseConfig = {
-  apiKey: "AIzaSyBQhyIwzMtbzsoE545AG7SXYKGWWAx90Cw",
-  authDomain: "thli-c4586.firebaseapp.com",
-  projectId: "thli-c4586",
-  storageBucket: "thli-c4586.firebasestorage.app",
-  messagingSenderId: "532149720287",
-  appId: "1:532149720287:web:d383aa200affcb28b5c56a"
-};
+      apiKey: "AIzaSyBQhyIwzMtbzsoE545AG7SXYKGWWAx90Cw",
+      authDomain: "thli-c4586.firebaseapp.com",
+      projectId: "thli-c4586",
+      storageBucket: "thli-c4586.firebasestorage.app",
+      messagingSenderId: "532149720287",
+      appId: "1:532149720287:web:d383aa200affcb28b5c56a"
     };
 
     const GUILD_PASSWORD = "legendes56370$$";
@@ -537,6 +535,23 @@ const firebaseConfig = {
       const OFFICERS = ["Anthony", "PseudoOfficier"];
     */
     const OFFICERS = [];
+
+    function isAdmin() {
+      return currentPlayer === "admin";
+    }
+
+    function updateAdminVisibility() {
+      const adminButton = document.getElementById("adminTabButton");
+      const adminPanel = document.getElementById("tab-admin");
+
+      if (!adminButton || !adminPanel) return;
+
+      adminButton.classList.toggle("hidden", !isAdmin());
+
+      if (!isAdmin() && !adminPanel.classList.contains("hidden")) {
+        showTab("items");
+      }
+    }
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import {
@@ -641,7 +656,7 @@ const firebaseConfig = {
       if (!playerSnap.exists()) {
         await setDoc(playerRef, {
           pseudo: currentPlayer,
-          role: OFFICERS.includes(currentPlayer) ? "officier" : "joueur",
+          role: isAdmin() ? "admin" : (OFFICERS.includes(currentPlayer) ? "officier" : "joueur"),
           createdAt: serverTimestamp(),
           lastLoginAt: serverTimestamp()
         });
@@ -659,6 +674,7 @@ const firebaseConfig = {
       document.getElementById("userBox").classList.remove("hidden");
       document.getElementById("currentUserLabel").textContent = `Connecté : ${currentPlayer}`;
 
+      updateAdminVisibility();
       subscribeData();
     };
 
@@ -716,6 +732,12 @@ const firebaseConfig = {
     }
 
     window.showTab = function showTab(tabName) {
+      if (tabName === "admin" && !isAdmin()) {
+        tabName = "items";
+      }
+
+      updateAdminVisibility();
+
       document.querySelectorAll(".tab").forEach(btn => {
         btn.classList.toggle("active", btn.dataset.tab === tabName);
       });
@@ -843,10 +865,12 @@ const firebaseConfig = {
                   ${loot.correctedBy ? ` — Corrigé par ${escapeHtml(loot.correctedBy)}` : ""}
                 </div>
               </div>
+              ${isAdmin() ? `
               <div class="row">
                 <button class="secondary small" onclick="editLoot('${jsEscape(loot.id)}')">Corriger</button>
                 <button class="danger small" onclick="deleteLoot('${jsEscape(loot.id)}')">Supprimer</button>
               </div>
+              ` : ""}
             </div>
           </div>
         `;
@@ -928,6 +952,11 @@ const firebaseConfig = {
     };
 
     window.addLoot = async function addLoot() {
+      if (!isAdmin()) {
+        alert("Action réservée au pseudo admin.");
+        return;
+      }
+
       const itemId = document.getElementById("lootItem").value;
       const player = document.getElementById("lootPlayer").value;
       const source = document.getElementById("lootSource").value.trim();
@@ -956,6 +985,11 @@ const firebaseConfig = {
     };
 
     window.editLoot = async function editLoot(lootId) {
+      if (!isAdmin()) {
+        alert("Action réservée au pseudo admin.");
+        return;
+      }
+
       const loot = loots.find(l => l.id === lootId);
 
       if (!loot) {
@@ -1042,6 +1076,11 @@ const firebaseConfig = {
     };
 
     window.deleteLoot = async function deleteLoot(lootId) {
+      if (!isAdmin()) {
+        alert("Action réservée au pseudo admin.");
+        return;
+      }
+
       const loot = loots.find(l => l.id === lootId);
       const item = getItem(loot?.itemId);
 
@@ -1055,6 +1094,11 @@ const firebaseConfig = {
     };
 
     window.importItemsFromTextarea = async function importItemsFromTextarea() {
+      if (!isAdmin()) {
+        alert("Action réservée au pseudo admin.");
+        return;
+      }
+
       const raw = document.getElementById("itemsJsonInput").value.trim();
       const box = document.getElementById("importMessage");
       box.innerHTML = "";
@@ -1102,6 +1146,11 @@ const firebaseConfig = {
     };
 
     window.downloadExampleJson = function downloadExampleJson() {
+      if (!isAdmin()) {
+        alert("Action réservée au pseudo admin.");
+        return;
+      }
+
       const blob = new Blob([JSON.stringify(defaultItems, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -1163,6 +1212,7 @@ const firebaseConfig = {
         document.getElementById("appView").classList.remove("hidden");
         document.getElementById("userBox").classList.remove("hidden");
         document.getElementById("currentUserLabel").textContent = `Connecté : ${currentPlayer}`;
+        updateAdminVisibility();
         subscribeData();
       }
     }
