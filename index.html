@@ -822,23 +822,25 @@
         return;
       }
 
-      container.innerHTML = players.map(player => {
-        const playerWishes = wishlists.filter(w => w.player === player.pseudo);
-        const playerItems = playerWishes
-          .map(w => getItem(w.itemId))
-          .filter(Boolean);
+      container.innerHTML = players
+        .filter(player => normalize(player.pseudo) !== "admin")
+        .map(player => {
+          const playerWishes = wishlists.filter(w => w.player === player.pseudo);
+          const playerItems = playerWishes
+            .map(w => getItem(w.itemId))
+            .filter(Boolean);
 
-        const content = playerItems.length
-          ? playerItems.map(item => compactItemLine(item)).join("")
-          : `<p class="muted">Aucun item souhaité.</p>`;
+          const content = playerItems.length
+            ? playerItems.map(item => compactItemLine(item)).join("")
+            : `<p class="muted">Aucun item souhaité.</p>`;
 
-        return `
-          <div class="player-block">
-            <h3>${escapeHtml(player.pseudo)}</h3>
-            ${content}
-          </div>
-        `;
-      }).join("");
+          return `
+            <div class="player-block">
+              <h3>${escapeHtml(player.pseudo)}</h3>
+              ${content}
+            </div>
+          `;
+        }).join("");
     }
 
     function renderLootHistory() {
